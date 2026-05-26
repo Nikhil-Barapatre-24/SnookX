@@ -85,10 +85,7 @@ public class AuthService {
 	private AuthResponse toResponse(User user, IssuedAccessToken accessToken, IssuedRefreshToken refreshToken) {
 		return new AuthResponse(
 				user.getId(),
-				user.getFullName(),
-				user.getEmail(),
 				user.getRole(),
-				"Bearer",
 				accessToken.token(),
 				accessToken.expiresAt(),
 				refreshToken.token(),
