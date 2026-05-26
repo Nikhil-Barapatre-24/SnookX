@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.poolsync.backend.auth.dto.AuthResponse;
 import com.poolsync.backend.auth.dto.LoginRequest;
 import com.poolsync.backend.auth.dto.RefreshTokenRequest;
-import com.poolsync.backend.auth.dto.RegisterRequest;
 
 import jakarta.validation.Valid;
 
@@ -24,11 +23,7 @@ public class AuthController {
 		this.authService = authService;
 	}
 
-	@PostMapping("/register")
-	@ResponseStatus(HttpStatus.CREATED)
-	public AuthResponse register(@Valid @RequestBody RegisterRequest request) {
-		return authService.register(request);
-	}
+
 
 	@PostMapping("/login")
 	public AuthResponse login(@Valid @RequestBody LoginRequest request) {

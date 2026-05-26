@@ -28,29 +28,11 @@ class AuthControllerTests {
 	private ObjectMapper objectMapper;
 
 	@Test
-	void registerLoginRefreshAndLogout() throws Exception {
-		String registerPayload = """
-				{
-				  "fullName": "Nikhil Barapatre",
-				  "email": "nikhil@example.com",
-				  "phone": "+919999999999",
-				  "password": "strong-password"
-				}
-				""";
-
-		MvcResult registerResult = mockMvc.perform(post("/api/auth/register")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(registerPayload))
-				.andExpect(status().isCreated())
-				.andExpect(jsonPath("$.accessToken").isString())
-				.andExpect(jsonPath("$.refreshToken").isString())
-				.andExpect(jsonPath("$.role").value("USER"))
-				.andReturn();
-
+	void loginRefreshAndLogout() throws Exception {
 		String loginPayload = """
 				{
-				  "email": "nikhil@example.com",
-				  "password": "strong-password"
+				  "email": "nikhilbarapatre786@gmail.com",
+				  "password": "Pass@1234"
 				}
 				""";
 
@@ -60,6 +42,7 @@ class AuthControllerTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.accessToken").isString())
 				.andExpect(jsonPath("$.refreshToken").isString())
+				.andExpect(jsonPath("$.role").value("OWNER"))
 				.andReturn();
 
 		String refreshToken = readRefreshToken(loginResult);
@@ -72,8 +55,7 @@ class AuthControllerTests {
 				.andExpect(jsonPath("$.accessToken").isString())
 				.andExpect(jsonPath("$.refreshToken").isString());
 
-		String firstRefreshToken = readRefreshToken(registerResult);
-		String logoutPayload = objectMapper.writeValueAsString(new RefreshPayload(firstRefreshToken));
+		String logoutPayload = objectMapper.writeValueAsString(new RefreshPayload(refreshToken));
 
 		mockMvc.perform(post("/api/auth/logout")
 						.contentType(MediaType.APPLICATION_JSON)
