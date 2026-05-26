@@ -30,12 +30,9 @@ public class JwtTokenService {
 		Instant expiresAt = issuedAt.plusSeconds(jwtProperties.accessTokenTtlMinutes() * 60);
 
 		JwtClaimsSet claims = JwtClaimsSet.builder()
-				.issuer(jwtProperties.issuer())
 				.issuedAt(issuedAt)
 				.expiresAt(expiresAt)
 				.subject(user.getId().toString())
-				.claim("email", user.getEmail())
-				.claim("fullName", user.getFullName())
 				.claim("roles", List.of(user.getRole().name()))
 				.build();
 

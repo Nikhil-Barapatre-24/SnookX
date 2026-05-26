@@ -13,17 +13,14 @@ import com.poolsync.backend.auth.RefreshTokenService.IssuedRefreshToken;
 import com.poolsync.backend.auth.dto.AuthResponse;
 import com.poolsync.backend.auth.dto.LoginRequest;
 import com.poolsync.backend.auth.dto.RefreshTokenRequest;
-import com.poolsync.backend.auth.dto.RegisterRequest;
 import com.poolsync.backend.user.User;
 import com.poolsync.backend.user.UserRepository;
-import com.poolsync.backend.user.UserRole;
 
 @Service
 public class AuthService {
 
 	private final UserRepository userRepository;
 	private final RefreshTokenRepository refreshTokenRepository;
-	private final PasswordEncoder passwordEncoder;
 	private final AuthenticationManager authenticationManager;
 	private final JwtTokenService jwtTokenService;
 	private final RefreshTokenService refreshTokenService;
@@ -31,40 +28,16 @@ public class AuthService {
 	public AuthService(
 			UserRepository userRepository,
 			RefreshTokenRepository refreshTokenRepository,
-			PasswordEncoder passwordEncoder,
 			AuthenticationManager authenticationManager,
 			JwtTokenService jwtTokenService,
 			RefreshTokenService refreshTokenService) {
 		this.userRepository = userRepository;
 		this.refreshTokenRepository = refreshTokenRepository;
-		this.passwordEncoder = passwordEncoder;
 		this.authenticationManager = authenticationManager;
 		this.jwtTokenService = jwtTokenService;
 		this.refreshTokenService = refreshTokenService;
 	}
 
-	@Transactional
-	public AuthResponse register(RegisterRequest request) {
-		String normalizedEmail = normalizeEmail(request.email());
-		String normalizedPhone = normalizePhone(request.phone());
-
-		if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already registered");
-		}
-		if (normalizedPhone != null && userRepository.existsByPhone(normalizedPhone)) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "Phone is already registered");
-		}
-
-		User user = new User(
-				request.fullName().trim(),
-				normalizedEmail,
-				normalizedPhone,
-				passwordEncoder.encode(request.password()),
-				UserRole.USER);
-		userRepository.save(user);
-
-		return issueAuthResponse(user);
-	}
 
 	@Transactional
 	public AuthResponse login(LoginRequest request) {
@@ -112,10 +85,7 @@ public class AuthService {
 	private AuthResponse toResponse(User user, IssuedAccessToken accessToken, IssuedRefreshToken refreshToken) {
 		return new AuthResponse(
 				user.getId(),
-				user.getFullName(),
-				user.getEmail(),
 				user.getRole(),
-				"Bearer",
 				accessToken.token(),
 				accessToken.expiresAt(),
 				refreshToken.token(),
