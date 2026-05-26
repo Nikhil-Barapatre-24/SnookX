@@ -4,17 +4,22 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.poolsync.backend.user.User;
+import com.poolsync.backend.user.UserRepository;
+import com.poolsync.backend.user.UserRole;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -26,6 +31,24 @@ class AuthControllerTests {
 
 	@Autowired
 	private ObjectMapper objectMapper;
+
+	@Autowired
+	private UserRepository userRepository;
+
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
+	@BeforeEach
+	void setUp() {
+		userRepository.deleteAll();
+		User owner = new User(
+				"Nikhil Barapatre",
+				"nikhilbarapatre786@gmail.com",
+				null,
+				passwordEncoder.encode("Pass@1234"),
+				UserRole.OWNER);
+		userRepository.save(owner);
+	}
 
 	@Test
 	void loginRefreshAndLogout() throws Exception {

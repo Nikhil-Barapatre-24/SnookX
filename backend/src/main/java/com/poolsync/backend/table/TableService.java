@@ -1,5 +1,6 @@
 package com.poolsync.backend.table;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
@@ -25,15 +26,14 @@ public class TableService {
 	@Transactional
 	public TableResponse createTable(CreateTableRequest request, UUID creatorId) {
 		validateTableUniqueness(request.tableNumber(), request.tableName(), null);
-		
+
 		GameTable table = new GameTable(
 				UUID.randomUUID(),
 				request.tableNumber(),
 				request.tableName(),
 				request.gameType(),
 				request.pricePerHour(),
-				creatorId
-		);
+				creatorId);
 		GameTable savedTable = tableRepository.save(table);
 		return TableResponse.fromEntity(savedTable);
 	}
@@ -50,11 +50,16 @@ public class TableService {
 		validateTableUniqueness(request.tableNumber() != null ? request.tableNumber() : table.getTableNumber(),
 				request.tableName() != null ? request.tableName() : table.getTableName(), id);
 
-		if (request.tableNumber() != null) table.setTableNumber(request.tableNumber());
-		if (request.tableName() != null) table.setTableName(request.tableName());
-		if (request.gameType() != null) table.setGameType(request.gameType());
-		if (request.pricePerHour() != null) table.setPricePerHour(request.pricePerHour());
-		if (request.status() != null) table.setStatus(request.status());
+		if (request.tableNumber() != null)
+			table.setTableNumber(request.tableNumber());
+		if (request.tableName() != null)
+			table.setTableName(request.tableName());
+		if (request.gameType() != null)
+			table.setGameType(request.gameType());
+		if (request.pricePerHour() != null)
+			table.setPricePerHour(request.pricePerHour());
+		if (request.status() != null)
+			table.setStatus(request.status());
 
 		table.setUpdatedBy(updaterId);
 
@@ -90,14 +95,18 @@ public class TableService {
 	}
 
 	private void validateTableUniqueness(String tableNumber, String tableName, UUID excludeId) {
-		GameTable existingByNumber = tableRepository.findByTableNumberIgnoreCaseAndIsActiveTrue(tableNumber);
-		if (existingByNumber != null && (excludeId == null || !existingByNumber.getId().equals(excludeId))) {
+		List<GameTable> tablesByNumber = tableRepository.findByTableNumberIgnoreCaseAndIsActiveTrue(tableNumber);
+		boolean numberConflict = tablesByNumber.stream()
+				.anyMatch(t -> excludeId == null || !t.getId().equals(excludeId));
+		if (numberConflict) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Table number already exists");
 		}
 
 		if (tableName != null && !tableName.isBlank()) {
-			GameTable existingByName = tableRepository.findByTableNameIgnoreCaseAndIsActiveTrue(tableName);
-			if (existingByName != null && (excludeId == null || !existingByName.getId().equals(excludeId))) {
+			List<GameTable> tablesByName = tableRepository.findByTableNameIgnoreCaseAndIsActiveTrue(tableName);
+			boolean nameConflict = tablesByName.stream()
+					.anyMatch(t -> excludeId == null || !t.getId().equals(excludeId));
+			if (nameConflict) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Table name already exists");
 			}
 		}

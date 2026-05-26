@@ -1,5 +1,6 @@
 package com.poolsync.backend.table;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -18,7 +19,7 @@ public interface TableRepository extends JpaRepository<GameTable, UUID> {
             "LOWER(t.tableName) LIKE LOWER(CONCAT('%', :query, '%')))")
     Page<GameTable> searchActiveTables(@Param("query") String query, Pageable pageable);
 
-    GameTable findByTableNumberIgnoreCaseAndIsActiveTrue(String tableNumber);
+    List<GameTable> findByTableNumberIgnoreCaseAndIsActiveTrue(String tableNumber);
 
-    GameTable findByTableNameIgnoreCaseAndIsActiveTrue(String tableName);
+    List<GameTable> findByTableNameIgnoreCaseAndIsActiveTrue(String tableName);
 }
