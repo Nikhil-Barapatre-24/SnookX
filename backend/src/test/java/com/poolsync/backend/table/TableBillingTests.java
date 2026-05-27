@@ -52,11 +52,15 @@ class TableBillingTests {
 	@Autowired
 	private TableSessionRepository tableSessionRepository;
 
+	@Autowired
+	private com.poolsync.backend.finance.FinancialTransactionRepository financialTransactionRepository;
+
 	private UUID ownerId;
 	private UUID tableId;
 
 	@BeforeEach
 	void setUp() throws Exception {
+		financialTransactionRepository.deleteAll();
 		tableSessionRepository.deleteAll();
 		tableRepository.deleteAll();
 		userRepository.deleteAll();
@@ -191,5 +195,60 @@ class TableBillingTests {
 				.with(jwt().jwt(j -> j.subject(ownerId.toString())).authorities(new SimpleGrantedAuthority("ROLE_OWNER"))))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("AVAILABLE"));
+
+		// Verify financial transaction was automatically created
+		var transactions = financialTransactionRepository.findAll();
+		assert transactions.size() == 1;
+		var transaction = transactions.get(0);
+		assert transaction.getCustomerName().equals("Jane Smith");
+		assert transaction.getCustomerPhone().equals("9123456789");
+		assert transaction.getTableId().equals(tableId);
+		assert transaction.getPaymentStatus() == com.poolsync.backend.finance.PaymentStatus.COMPLETED;
+	}
+
+	@Test
+	void completePayment_createsFinancialTransactionAutomatically() throws Exception {
+		// First, occupy the table
+		UpdateTableRequest occupyRequest = new UpdateTableRequest(
+				null,
+				null,
+				null,
+				null,
+				TableStatus.OCCUPIED,
+				"Bob Wilson",
+				"9988776655");
+		String occupyRequestJson = objectMapper.writeValueAsString(occupyRequest);
+
+		mockMvc.perform(put("/api/tables/{id}", tableId)
+				.with(jwt().jwt(j -> j.subject(ownerId.toString())).authorities(new SimpleGrantedAuthority("ROLE_OWNER")))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(occupyRequestJson))
+				.andExpect(status().isOk());
+
+		// Wait a bit to ensure some duration
+		Thread.sleep(1000);
+
+		// Complete payment
+		CompletePaymentRequest paymentRequest = new CompletePaymentRequest(
+				new BigDecimal("200.00"),
+				PaymentMethod.CASH);
+		String paymentRequestJson = objectMapper.writeValueAsString(paymentRequest);
+
+		mockMvc.perform(post("/api/tables/{id}/complete-payment", tableId)
+				.with(jwt().jwt(j -> j.subject(ownerId.toString())).authorities(new SimpleGrantedAuthority("ROLE_OWNER")))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(paymentRequestJson))
+				.andExpect(status().isOk());
+
+		// Verify financial transaction was automatically created
+		var transactions = financialTransactionRepository.findAll();
+		assert transactions.size() == 1;
+		var transaction = transactions.get(0);
+		assert transaction.getCustomerName().equals("Bob Wilson");
+		assert transaction.getCustomerPhone().equals("9988776655");
+		assert transaction.getTableId().equals(tableId);
+		assert transaction.getPaymentStatus() == com.poolsync.backend.finance.PaymentStatus.COMPLETED;
+		assert transaction.getTransactionId() != null;
+		assert transaction.getTransactionId().startsWith("TXN-");
 	}
 }

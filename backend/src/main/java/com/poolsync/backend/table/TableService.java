@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.Year;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,6 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.poolsync.backend.common.dto.PagedResponse;
+import com.poolsync.backend.finance.FinancePaymentMethod;
+import com.poolsync.backend.finance.FinancialTransaction;
+import com.poolsync.backend.finance.FinancialTransactionRepository;
+import com.poolsync.backend.finance.PaymentStatus;
 import com.poolsync.backend.table.dto.CompletePaymentRequest;
 import com.poolsync.backend.table.dto.CreateTableRequest;
 import com.poolsync.backend.table.dto.CurrentBillResponse;
@@ -26,10 +32,13 @@ public class TableService {
 
 	private final TableRepository tableRepository;
 	private final TableSessionRepository tableSessionRepository;
+	private final FinancialTransactionRepository financialTransactionRepository;
 
-	public TableService(TableRepository tableRepository, TableSessionRepository tableSessionRepository) {
+	public TableService(TableRepository tableRepository, TableSessionRepository tableSessionRepository,
+			FinancialTransactionRepository financialTransactionRepository) {
 		this.tableRepository = tableRepository;
 		this.tableSessionRepository = tableSessionRepository;
+		this.financialTransactionRepository = financialTransactionRepository;
 	}
 
 	@Transactional
@@ -202,6 +211,10 @@ public class TableService {
 		table.setUpdatedBy(updaterId);
 		tableRepository.save(table);
 
+		// Automatically create financial transaction
+		createFinancialTransaction(session, table, calculatedAmount, request.receivedAmount(), difference,
+				request.paymentMethod(), updaterId);
+
 		return new PaymentCompletionResponse(
 				session.getId(),
 				table.getId(),
@@ -223,5 +236,50 @@ public class TableService {
 		// Calculate exact amount: (durationMinutes / 60) * pricePerHour
 		BigDecimal hours = BigDecimal.valueOf(durationMinutes).divide(BigDecimal.valueOf(60), 10, RoundingMode.HALF_UP);
 		return hours.multiply(pricePerHour).setScale(2, RoundingMode.HALF_UP);
+	}
+
+	private void createFinancialTransaction(TableSession session, GameTable table, BigDecimal expectedAmount,
+			BigDecimal actualAmount, BigDecimal difference, PaymentMethod paymentMethod, UUID creatorId) {
+		// Generate transaction ID: TXN-YYYY-XXXXX
+		String transactionId = generateTransactionId();
+
+		// Convert table PaymentMethod to finance FinancePaymentMethod
+		FinancePaymentMethod financePaymentMethod = convertPaymentMethod(paymentMethod);
+
+		FinancialTransaction transaction = new FinancialTransaction(
+				UUID.randomUUID(),
+				transactionId,
+				session.getCustomerName(),
+				session.getCustomerPhone(),
+				table.getId(),
+				table.getTableNumber(),
+				table.getTableName(),
+				session.getId(),
+				session.getStartTime(),
+				session.getEndTime(),
+				Duration.between(session.getStartTime(), session.getEndTime()).toMinutes(),
+				table.getPricePerHour(),
+				expectedAmount,
+				actualAmount,
+				difference,
+				financePaymentMethod,
+				PaymentStatus.COMPLETED,
+				LocalDate.now(),
+				creatorId);
+
+		financialTransactionRepository.save(transaction);
+	}
+
+	private String generateTransactionId() {
+		Year year = Year.now();
+		long count = financialTransactionRepository.count() + 1;
+		return String.format("TXN-%d-%05d", year.getValue(), count);
+	}
+
+	private FinancePaymentMethod convertPaymentMethod(PaymentMethod paymentMethod) {
+		return switch (paymentMethod) {
+			case CASH -> FinancePaymentMethod.CASH;
+			case ONLINE -> FinancePaymentMethod.ONLINE;
+		};
 	}
 }
