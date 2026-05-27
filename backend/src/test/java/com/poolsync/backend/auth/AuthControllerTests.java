@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.poolsync.backend.table.TableRepository;
 import com.poolsync.backend.user.User;
 import com.poolsync.backend.user.UserRepository;
 import com.poolsync.backend.user.UserRole;
@@ -38,8 +39,12 @@ class AuthControllerTests {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
+	@Autowired
+	private TableRepository tableRepository;
+
 	@BeforeEach
 	void setUp() {
+		tableRepository.deleteAll();
 		userRepository.deleteAll();
 		User owner = new User(
 				"Nikhil Barapatre",

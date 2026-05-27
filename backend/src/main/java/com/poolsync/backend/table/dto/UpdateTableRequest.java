@@ -9,5 +9,7 @@ public record UpdateTableRequest(
 		String tableName,
 		GameType gameType,
 		BigDecimal pricePerHour,
-		TableStatus status) {
+		TableStatus status,
+		String customerName,
+		String customerPhone) {
 }

@@ -19,7 +19,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.poolsync.backend.common.dto.PagedResponse;
+import com.poolsync.backend.table.dto.CompletePaymentRequest;
 import com.poolsync.backend.table.dto.CreateTableRequest;
+import com.poolsync.backend.table.dto.CurrentBillResponse;
+import com.poolsync.backend.table.dto.PaymentCompletionResponse;
 import com.poolsync.backend.table.dto.TableResponse;
 import com.poolsync.backend.table.dto.UpdateTableRequest;
 
@@ -77,5 +80,20 @@ public class TableController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void softDeleteTable(@PathVariable UUID id, Authentication auth) {
 		tableService.softDeleteTable(id, getUserId(auth));
+	}
+
+	@GetMapping("/{id}/current-bill")
+	@PreAuthorize("hasAnyRole('OWNER', 'USER')")
+	public CurrentBillResponse getCurrentBill(@PathVariable UUID id) {
+		return tableService.getCurrentBill(id);
+	}
+
+	@PostMapping("/{id}/complete-payment")
+	@PreAuthorize("hasAnyRole('OWNER', 'USER')")
+	public PaymentCompletionResponse completePayment(
+			@PathVariable UUID id,
+			@RequestBody CompletePaymentRequest request,
+			Authentication auth) {
+		return tableService.completePayment(id, request, getUserId(auth));
 	}
 }
