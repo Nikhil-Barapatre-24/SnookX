@@ -1,5 +1,9 @@
 package com.poolsync.backend.table;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -10,7 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.poolsync.backend.common.dto.PagedResponse;
+import com.poolsync.backend.table.dto.CompletePaymentRequest;
 import com.poolsync.backend.table.dto.CreateTableRequest;
+import com.poolsync.backend.table.dto.CurrentBillResponse;
+import com.poolsync.backend.table.dto.PaymentCompletionResponse;
 import com.poolsync.backend.table.dto.TableResponse;
 import com.poolsync.backend.table.dto.UpdateTableRequest;
 
@@ -18,9 +25,11 @@ import com.poolsync.backend.table.dto.UpdateTableRequest;
 public class TableService {
 
 	private final TableRepository tableRepository;
+	private final TableSessionRepository tableSessionRepository;
 
-	public TableService(TableRepository tableRepository) {
+	public TableService(TableRepository tableRepository, TableSessionRepository tableSessionRepository) {
 		this.tableRepository = tableRepository;
+		this.tableSessionRepository = tableSessionRepository;
 	}
 
 	@Transactional
@@ -49,6 +58,20 @@ public class TableService {
 
 		validateTableUniqueness(request.tableNumber() != null ? request.tableNumber() : table.getTableNumber(),
 				request.tableName() != null ? request.tableName() : table.getTableName(), id);
+
+		// Check if status is being changed from AVAILABLE to OCCUPIED
+		if (request.status() != null && request.status() == TableStatus.OCCUPIED
+				&& table.getStatus() == TableStatus.AVAILABLE) {
+			// Create a new session
+			TableSession session = new TableSession(
+					UUID.randomUUID(),
+					table.getId(),
+					Instant.now(),
+					updaterId);
+			session.setCustomerName(request.customerName());
+			session.setCustomerPhone(request.customerPhone());
+			tableSessionRepository.save(session);
+		}
 
 		if (request.tableNumber() != null)
 			table.setTableNumber(request.tableNumber());
@@ -110,5 +133,95 @@ public class TableService {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Table name already exists");
 			}
 		}
+	}
+
+	@Transactional(readOnly = true)
+	public CurrentBillResponse getCurrentBill(UUID tableId) {
+		GameTable table = tableRepository.findById(tableId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
+
+		if (!table.isActive()) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Table is deactivated");
+		}
+
+		if (table.getStatus() != TableStatus.OCCUPIED) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Table is not currently occupied");
+		}
+
+		TableSession session = tableSessionRepository.findByTableIdAndEndTimeIsNull(tableId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No active session found for this table"));
+
+		Instant now = Instant.now();
+		long durationMinutes = Duration.between(session.getStartTime(), now).toMinutes();
+		BigDecimal calculatedAmount = calculateAmount(session.getStartTime(), now, table.getPricePerHour());
+
+		return new CurrentBillResponse(
+				session.getId(),
+				table.getId(),
+				table.getTableNumber(),
+				table.getTableName(),
+				session.getStartTime(),
+				table.getPricePerHour(),
+				calculatedAmount,
+				durationMinutes,
+				session.getCustomerName(),
+				session.getCustomerPhone());
+	}
+
+	@Transactional
+	public PaymentCompletionResponse completePayment(UUID tableId, CompletePaymentRequest request, UUID updaterId) {
+		GameTable table = tableRepository.findById(tableId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
+
+		if (!table.isActive()) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Table is deactivated");
+		}
+
+		if (table.getStatus() != TableStatus.OCCUPIED) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Table is not currently occupied");
+		}
+
+		TableSession session = tableSessionRepository.findByTableIdAndEndTimeIsNull(tableId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No active session found for this table"));
+
+		Instant now = Instant.now();
+		long durationMinutes = Duration.between(session.getStartTime(), now).toMinutes();
+		BigDecimal calculatedAmount = calculateAmount(session.getStartTime(), now, table.getPricePerHour());
+		BigDecimal difference = request.receivedAmount().subtract(calculatedAmount);
+
+		// Update session
+		session.setEndTime(now);
+		session.setCalculatedAmount(calculatedAmount);
+		session.setReceivedAmount(request.receivedAmount());
+		session.setPaymentMethod(request.paymentMethod());
+		session.setUpdatedBy(updaterId);
+		tableSessionRepository.save(session);
+
+		// Update table status to AVAILABLE
+		table.setStatus(TableStatus.AVAILABLE);
+		table.setUpdatedBy(updaterId);
+		tableRepository.save(table);
+
+		return new PaymentCompletionResponse(
+				session.getId(),
+				table.getId(),
+				table.getTableNumber(),
+				table.getTableName(),
+				session.getStartTime(),
+				session.getEndTime(),
+				calculatedAmount,
+				request.receivedAmount(),
+				difference,
+				request.paymentMethod(),
+				durationMinutes,
+				session.getCustomerName(),
+				session.getCustomerPhone());
+	}
+
+	private BigDecimal calculateAmount(Instant startTime, Instant endTime, BigDecimal pricePerHour) {
+		long durationMinutes = Duration.between(startTime, endTime).toMinutes();
+		// Calculate exact amount: (durationMinutes / 60) * pricePerHour
+		BigDecimal hours = BigDecimal.valueOf(durationMinutes).divide(BigDecimal.valueOf(60), 10, RoundingMode.HALF_UP);
+		return hours.multiply(pricePerHour).setScale(2, RoundingMode.HALF_UP);
 	}
 }
