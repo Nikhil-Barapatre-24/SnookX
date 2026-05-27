@@ -1,26 +1,86 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: Arial, Helvetica, sans-serif;
-  --font-mono: "Courier New", Courier, monospace;
+  --color-felt: #15803d;
+  --color-felt-light: #16a34a;
+  --color-gold: #d97706;
+  --color-gold-light: #f59e0b;
+  --color-dark: #060a0e;
+  --color-surface: #0d1520;
+  --color-surface-2: #111d2c;
+  --color-border: #1e3048;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), ui-serif, Georgia, serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Keyframes ─────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-12px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 18px 2px rgba(21,128,61,0.35); }
+  50%       { box-shadow: 0 0 38px 6px rgba(21,128,61,0.65); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+/* ── Utility classes ────────────────────────────── */
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out both;
+}
+
+.animate-float {
+  animation: floatY 3.5s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.4s ease-in-out infinite;
+}
+
+/* Gold shimmer text */
+.gradient-text {
+  background: linear-gradient(
+    120deg,
+    #f59e0b 0%,
+    #fbbf24 30%,
+    #d97706 60%,
+    #f59e0b 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+/* Subtle felt / blueprint grid for hero */
+.felt-pattern {
+  background-color: #060a0e;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(21,128,61,0.18) 0%, transparent 55%),
+    radial-gradient(circle at 80% 70%, rgba(21,128,61,0.12) 0%, transparent 55%),
+    linear-gradient(rgba(30,48,72,0.45) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30,48,72,0.45) 1px, transparent 1px);
+  background-size: auto, auto, 80px 80px, 80px 80px;
+}
+
+/* Scrollbar (nice on desktop) */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #060a0e; }
+::-webkit-scrollbar-thumb { background: #1e3048; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #15803d; }
