@@ -22,10 +22,10 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+      className={`fixed inset-x-0 top-0 z-50 will-change-transform transition-[background-color,box-shadow] duration-300 ${
         scrolled
-          ? "bg-[#060a0e]/95 backdrop-blur-md border-b border-[#1e3048] shadow-xl shadow-black/40"
-          : "bg-transparent"
+          ? "bg-[#060a0e] shadow-[0_4px_20px_rgba(0,0,0,0.6)]"
+          : "bg-transparent shadow-none"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

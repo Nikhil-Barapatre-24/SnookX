@@ -14,7 +14,7 @@ export default function AppShell({ role, children }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-[#070c12] overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* ── Sidebar ── */}
       <Sidebar
         role={role}
@@ -37,7 +37,7 @@ export default function AppShell({ role, children }: Props) {
           role={role}
           onMenuToggle={() => setSidebarOpen((v) => !v)}
         />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-background">
           {children}
         </main>
       </div>

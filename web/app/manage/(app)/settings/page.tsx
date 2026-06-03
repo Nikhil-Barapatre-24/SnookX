@@ -1,4 +1,9 @@
 import type { Metadata } from "next";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 export const metadata: Metadata = { title: "Settings — SnookX Management" };
 
@@ -6,107 +11,84 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-2xl">
 
-      {/* Header */}
       <div>
-        <h2 className="text-xl font-bold text-slate-100">Settings</h2>
-        <p className="text-sm text-slate-500 mt-0.5">Manage your venue and account preferences.</p>
+        <h2 className="text-xl font-bold text-foreground">Settings</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">Manage your venue and account preferences.</p>
       </div>
 
-      {/* Venue settings */}
-      <div className="bg-[#0d1520]/70 border border-[#1e3048] rounded-2xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-[#1e3048]">
-          <h3 className="font-semibold text-slate-200">Venue Info</h3>
-          <p className="text-xs text-slate-600 mt-0.5">Basic details about your snooker club.</p>
-        </div>
-        <div className="p-5 space-y-4">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-              Venue Name
-            </label>
-            <input
-              type="text"
-              defaultValue="SnookX Nagpur"
-              className="w-full px-4 py-2.5 rounded-xl bg-[#0a1018] border border-[#1e3048] text-slate-200 text-sm focus:outline-none focus:border-green-700/50 focus:ring-1 focus:ring-green-700/30 transition-all"
-            />
+      {/* Venue info */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Venue Info</CardTitle>
+          <CardDescription>Basic details about your snooker club.</CardDescription>
+        </CardHeader>
+        <Separator />
+        <CardContent className="pt-5 space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="vname">Venue Name</Label>
+            <Input id="vname" defaultValue="SnookX Nagpur" />
           </div>
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-              Address
-            </label>
+          <div className="space-y-1.5">
+            <Label htmlFor="address">Address</Label>
             <textarea
+              id="address"
               rows={2}
               defaultValue="Civil Lines, Nagpur, Maharashtra 440001"
-              className="w-full px-4 py-2.5 rounded-xl bg-[#0a1018] border border-[#1e3048] text-slate-200 text-sm focus:outline-none focus:border-green-700/50 focus:ring-1 focus:ring-green-700/30 transition-all resize-none"
+              className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                Phone
-              </label>
-              <input
-                type="tel"
-                defaultValue="+91 71234 56789"
-                className="w-full px-4 py-2.5 rounded-xl bg-[#0a1018] border border-[#1e3048] text-slate-200 text-sm focus:outline-none focus:border-green-700/50 focus:ring-1 focus:ring-green-700/30 transition-all"
-              />
+            <div className="space-y-1.5">
+              <Label htmlFor="phone">Phone</Label>
+              <Input id="phone" type="tel" defaultValue="+91 71234 56789" />
             </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                Opening Time
-              </label>
-              <input
-                type="text"
-                defaultValue="10:00 AM – 11:00 PM"
-                className="w-full px-4 py-2.5 rounded-xl bg-[#0a1018] border border-[#1e3048] text-slate-200 text-sm focus:outline-none focus:border-green-700/50 focus:ring-1 focus:ring-green-700/30 transition-all"
-              />
+            <div className="space-y-1.5">
+              <Label htmlFor="hours">Opening Hours</Label>
+              <Input id="hours" defaultValue="10:00 AM – 11:00 PM" />
             </div>
           </div>
-          <div className="flex justify-end pt-2">
-            <button className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-green-700 hover:bg-green-600 text-white transition-colors">
-              Save Changes
-            </button>
+          <div className="flex justify-end pt-1">
+            <Button>Save Changes</Button>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Security */}
-      <div className="bg-[#0d1520]/70 border border-[#1e3048] rounded-2xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-[#1e3048]">
-          <h3 className="font-semibold text-slate-200">Security</h3>
-          <p className="text-xs text-slate-600 mt-0.5">Update your account password.</p>
-        </div>
-        <div className="p-5 space-y-4">
-          {["Current Password", "New Password", "Confirm New Password"].map((label) => (
-            <div key={label}>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                {label}
-              </label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                className="w-full px-4 py-2.5 rounded-xl bg-[#0a1018] border border-[#1e3048] text-slate-200 text-sm focus:outline-none focus:border-green-700/50 focus:ring-1 focus:ring-green-700/30 transition-all"
-              />
+      <Card>
+        <CardHeader>
+          <CardTitle>Security</CardTitle>
+          <CardDescription>Update your account password.</CardDescription>
+        </CardHeader>
+        <Separator />
+        <CardContent className="pt-5 space-y-4">
+          {[
+            { id: "cur", label: "Current Password" },
+            { id: "new", label: "New Password" },
+            { id: "cnf", label: "Confirm New Password" },
+          ].map(({ id, label }) => (
+            <div key={id} className="space-y-1.5">
+              <Label htmlFor={id}>{label}</Label>
+              <Input id={id} type="password" placeholder="••••••••" />
             </div>
           ))}
-          <div className="flex justify-end pt-2">
-            <button className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-green-700 hover:bg-green-600 text-white transition-colors">
-              Change Password
-            </button>
+          <div className="flex justify-end pt-1">
+            <Button>Change Password</Button>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Danger zone */}
-      <div className="bg-red-950/20 border border-red-900/40 rounded-2xl p-5">
-        <h3 className="font-semibold text-red-400 mb-1">Danger Zone</h3>
-        <p className="text-xs text-slate-600 mb-4">These actions are irreversible. Proceed with caution.</p>
-        <button
-          className="px-4 py-2 rounded-xl text-sm font-medium text-red-400 border border-red-800/40 hover:bg-red-900/20 transition-all disabled:opacity-40"
-          disabled
-        >
-          Delete Venue Data
-        </button>
-      </div>
+      <Card className="border-destructive/30 bg-destructive/5">
+        <CardHeader>
+          <CardTitle className="text-destructive">Danger Zone</CardTitle>
+          <CardDescription>These actions are irreversible. Proceed with caution.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="destructive" disabled>
+            Delete Venue Data
+          </Button>
+        </CardContent>
+      </Card>
 
     </div>
   );

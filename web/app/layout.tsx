@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
+import { ThemeProvider } from "./manage/components/ThemeProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -27,10 +28,21 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${inter.variable} ${playfair.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#060a0e] text-slate-100 font-sans">
-        {children}
+      {/* bg-[#060a0e] is a hard fallback for the landing page so the body is
+          never white before next-themes hydrates — the management AppShell
+          covers it with bg-background for light/dark mode. */}
+      <body className="min-h-full flex flex-col font-sans bg-[#060a0e]">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
