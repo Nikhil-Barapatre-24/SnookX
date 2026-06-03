@@ -1,5 +1,6 @@
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
+import MarqueeTicker from "./components/MarqueeTicker";
 import GamesSection from "./components/GamesSection";
 import Gallery from "./components/Gallery";
 import FindUs from "./components/FindUs";
@@ -12,6 +13,7 @@ export default function LandingPage() {
       <Navbar />
       <main>
         <Hero />
+        <MarqueeTicker />
         <GamesSection />
         <Gallery />
         <FindUs />
